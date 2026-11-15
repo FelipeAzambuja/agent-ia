@@ -1,12 +1,13 @@
 {
     "name": "felipeazambuja/agent-ia",
-    "description": "Generic AI agent in plain PHP: per-session history, pluggable memory, tools (function calling) and subagents with structured handoff.",
+    "description": "Generic AI agent in plain PHP: per-session history, pluggable memory, tools (function calling), subagents with structured handoff and autonomous RAG.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["ai", "agent", "llm", "openrouter", "function-calling", "subagents", "orchestrator"],
+    "keywords": ["ai", "agent", "llm", "openrouter", "function-calling", "subagents", "orchestrator", "rag", "embeddings", "vector-store"],
     "require": {
         "php": "^8.2",
         "cheinisch/openrouter-php-client": "^0.3.0",
+        "guzzlehttp/guzzle": "^7.8",
         "psr/log": "^3.0",
         "psr/simple-cache": "^3.0"
     },

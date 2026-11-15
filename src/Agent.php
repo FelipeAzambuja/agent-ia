@@ -4,6 +4,7 @@ namespace AgentIa;
 
 use AgentIa\Memory\MemoryBackend;
 use AgentIa\Memory\TopicsBackend;
+use AgentIa\Rag\RagSource;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -37,6 +38,15 @@ use Psr\Log\LoggerInterface;
  * invocation and persistent memory would duplicate the transcript.
  * Call addSubAgent() after setTools(), which replaces the tools array.
  *   $agent->addSubAgent((new Agent($client))->setName('Clovis')->setInstruction('...'), 'Handles calls about subject X');
+ *
+ * RAG: knowledge bases registered with addRagSource() are used in two
+ * complementary ways. Before the turn, a light model routes: it decides
+ * whether the message needs retrieval, from which sources and with what
+ * (rewritten) query; the retrieved chunks are injected as a system
+ * block. Independently, every source is also a tool (search_<name>), so
+ * the main model can search again mid-turn — refine the query or consult
+ * another source. Routing failure never blocks the response.
+ *   $agent->addRagSource(new VectorRagSource('products', 'Product catalog with prices', $store, $embeddings, 'products'));
  */
 class Agent
 {
@@ -58,6 +68,8 @@ class Agent
     private string $instruction = '';
     /** @var array<string, array{description:string,parameters:array,execute:callable}> */
     private array $tools = [];
+    /** @var array<string, RagSource> RAG sources keyed by normalized name. */
+    private array $ragSources = [];
     /** @var array<int, array{role:string,content:string}> */
     private array $history = [];
     /** @var array<int, array{id:int,description:string,messages:string[],notes:string[]}> */
@@ -123,6 +135,53 @@ class Agent
                 return $response . "\n\n[Delegation status: the subagent "
                     . ($status ? 'did handle what was expected.' : 'did NOT handle what was expected. '
                         . 'If another possible subagent exists, delegate to it; if none can, answer the user yourself.') . ']';
+            },
+        ];
+        return $this;
+    }
+
+    /**
+     * Shorter alias of addRagSource(): accepts any RagSource, including
+     * the high-level Rag facade.
+     *   $agent->addRag(new Rag('manuals', 'Product manuals...', $key));
+     */
+    public function addRag(RagSource $source): static
+    {
+        return $this->addRagSource($source);
+    }
+
+    /**
+     * Registers a RAG knowledge source: it becomes a search tool for the
+     * main model and a routing option for the pre-turn light model (see
+     * ragBlock()). The tool takes the rewritten query, an optional limit
+     * and the reason for the search (audit of the autonomous decision).
+     */
+    public function addRagSource(RagSource $source): static
+    {
+        $name = $this->toolName($source->name()) ?: 'rag_' . (count($this->ragSources) + 1);
+        $this->ragSources[$name] = $source;
+        $this->tools['search_' . $name] = [
+            'description' => $source->description()
+                . ' Search this knowledge base when the answer may depend on its content. Fill in "reason" with why the search is needed.',
+            'parameters' => [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'properties' => [
+                    'query' => ['type' => 'string'],
+                    'limit' => ['type' => 'integer'],
+                    'reason' => ['type' => 'string'],
+                ],
+                'required' => ['query', 'reason'],
+            ],
+            'execute' => function (array $args) use ($name, $source): string {
+                $limit = max(1, min(20, (int) ($args['limit'] ?? 5)));
+                $chunks = $source->search((string) ($args['query'] ?? ''), $limit);
+                if ($chunks === []) return "No relevant excerpts found in {$name} for this query.";
+                $blocks = array_map(
+                    fn (array $c) => '[score ' . round((float) $c['score'], 3) . '] ' . (string) $c['text'],
+                    $chunks,
+                );
+                return "Excerpts from {$name}:\n\n" . implode("\n\n", $blocks);
             },
         ];
         return $this;
@@ -196,6 +255,10 @@ class Agent
         $messages = $this->instruction !== '' ? [['role' => 'system', 'content' => $this->instruction]] : [];
         if ($this->topicMemory) {
             $block = $this->topicsBlock($message);
+            if ($block !== '') $messages[] = ['role' => 'system', 'content' => $block];
+        }
+        if ($this->ragSources !== []) {
+            $block = $this->ragBlock($message);
             if ($block !== '') $messages[] = ['role' => 'system', 'content' => $block];
         }
         $messages = array_merge($messages, array_slice($this->history, -self::MAX_HISTORY));
@@ -408,6 +471,69 @@ class Agent
             . 'Notes: ' . (implode(' | ', $t['notes']) ?: '(none)') . "\n"
             . "Messages:\n" . implode("\n", $t['messages']), $part);
         return "Memory of previous subjects in this session:\n\n" . implode("\n\n", $blocks);
+    }
+
+    /**
+     * Pre-turn RAG routing: a light model decides whether the message
+     * needs retrieval, from which sources and with what (rewritten)
+     * query; the chunks come back as a system block. Failure or "not
+     * needed" returns '' — the turn proceeds without RAG (the sources
+     * remain available as tools for the main model).
+     */
+    private function ragBlock(string $message): string
+    {
+        if (trim($message) === '') return '';
+        $list = array_map(fn ($s) => ['name' => $s->name(), 'description' => $s->description()], $this->ragSources);
+        try {
+            $decision = $this->client->structuredChat(
+                [
+                    ['role' => 'system', 'content' => "You decide whether answering the user's current message requires consulting a knowledge base (RAG). Use it for questions about facts, policies, catalogs, documents or anything the sources may contain; not for greetings, small talk or pure reasoning. Return which sources to consult, a search query rewritten with the terms needed to find the content, and the reason for the decision."],
+                    ['role' => 'user', 'content' => "Current message:\n{$message}\n\nSources:\n" . json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)],
+                ],
+                [
+                    'name' => 'rag_routing',
+                    'strict' => true,
+                    'schema' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'properties' => [
+                            'needed' => ['type' => 'boolean'],
+                            'sources' => ['type' => 'array', 'items' => ['type' => 'string']],
+                            'query' => ['type' => 'string'],
+                            'reason' => ['type' => 'string'],
+                        ],
+                        'required' => ['needed', 'sources', 'query', 'reason'],
+                    ],
+                ],
+                $this->lightModel,
+            );
+        } catch (\Throwable $e) {
+            $this->logger?->error('Agent: RAG routing failed: {error}', ['error' => $e->getMessage()]);
+            return '';
+        }
+        if (!($decision['needed'] ?? false)) return '';
+        $query = trim((string) ($decision['query'] ?? '')) ?: $message;
+        $reason = trim((string) ($decision['reason'] ?? ''));
+        $names = array_values(array_intersect((array) ($decision['sources'] ?? []), array_keys($this->ragSources)));
+        $blocks = [];
+        foreach ($names as $name) {
+            try {
+                $chunks = $this->ragSources[$name]->search($query, 5);
+            } catch (\Throwable $e) {
+                $this->logger?->error('Agent: RAG search in {name} failed: {error}', ['name' => $name, 'error' => $e->getMessage()]);
+                continue;
+            }
+            if ($chunks === []) continue;
+            $parts = array_map(
+                fn (array $c) => '[score ' . round((float) $c['score'], 3) . '] ' . (string) $c['text'],
+                $chunks,
+            );
+            $blocks[] = "## {$name}\n" . implode("\n", $parts);
+        }
+        if ($blocks === []) return '';
+        return "Relevant excerpts from the knowledge bases"
+            . ($reason !== '' ? " (reason: {$reason})" : '')
+            . ":\n\n" . implode("\n\n", $blocks);
     }
 
     /**
