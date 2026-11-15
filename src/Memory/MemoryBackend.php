@@ -1,16 +1,16 @@
 <?php
 
-namespace AgenteIa\Memory;
+namespace AgentIa\Memory;
 
 /**
- * Backend de memória conversacional por sessão: carrega o histórico de
- * uma sessão e grava o turno (uma mensagem por vez). Implementações
- * típicas: cache PSR-16, banco via PDO, ou nada (memória do processo).
+ * Per-session conversational memory backend: loads a session's history
+ * and saves the turn (one message at a time). Typical implementations:
+ * PSR-16 cache, database via PDO, or nothing (in-process memory).
  */
 interface MemoryBackend
 {
     /** @return array<int, array{role:string,content:string}> */
-    public function carregar(string $sessionId): array;
+    public function load(string $sessionId): array;
 
-    public function gravar(string $sessionId, string $papel, string $conteudo): void;
+    public function save(string $sessionId, string $role, string $content): void;
 }

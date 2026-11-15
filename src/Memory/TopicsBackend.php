@@ -1,20 +1,20 @@
 <?php
 
-namespace AgenteIa\Memory;
+namespace AgentIa\Memory;
 
 /**
- * Backend de tópicos de memória de longo prazo por sessão: assuntos
- * guardados com mensagens e anotações, criados e atualizados pela
- * gerência pós-turno do Agente.
+ * Long-term topic memory backend per session: subjects kept with
+ * messages and notes, created and updated by the Agent's post-turn
+ * memory management.
  */
 interface TopicsBackend
 {
-    /** @return array<int, array{id:int,descricao:string,mensagens:string[],anotacoes:string[]}> */
-    public function todos(string $sessionId): array;
+    /** @return array<int, array{id:int,description:string,messages:string[],notes:string[]}> */
+    public function all(string $sessionId): array;
 
-    /** @param string[] $mensagens @param string[] $anotacoes */
-    public function criar(string $sessionId, string $descricao, array $mensagens, array $anotacoes): void;
+    /** @param string[] $messages @param string[] $notes */
+    public function create(string $sessionId, string $description, array $messages, array $notes): void;
 
-    /** @param string[] $mensagens @param string[] $anotacoes */
-    public function atualizar(int $id, array $mensagens, array $anotacoes): void;
+    /** @param string[] $messages @param string[] $notes */
+    public function update(int $id, array $messages, array $notes): void;
 }

@@ -1,6 +1,6 @@
 <?php
 
 /*
- * Configuração do Pest: os testes são funções puras sobre objetos reais,
- * sem TestCase nem bootstrap adicional (vendor/autoload.php cobre tudo).
+ * Pest configuration: the tests are pure functions over real objects,
+ * with no TestCase and no extra bootstrap (vendor/autoload.php covers it).
  */

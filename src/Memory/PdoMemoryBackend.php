@@ -1,41 +1,41 @@
 <?php
 
-namespace AgenteIa\Memory;
+namespace AgentIa\Memory;
 
 /**
- * MemoryBackend sobre PDO (MySQL, PostgreSQL, SQLite...). Tabela esperada:
+ * MemoryBackend over PDO (MySQL, PostgreSQL, SQLite...). Expected table:
  *
- *   CREATE TABLE agente_memorias (
+ *   CREATE TABLE agent_memories (
  *       id         BIGINT AUTO_INCREMENT PRIMARY KEY,
  *       session_id VARCHAR(191) NOT NULL,
- *       papel      VARCHAR(16)  NOT NULL,
- *       conteudo   TEXT         NOT NULL,
+ *       role       VARCHAR(16)  NOT NULL,
+ *       content    TEXT         NOT NULL,
  *       created_at DATETIME     NOT NULL
  *   );
- *   CREATE INDEX idx_agente_memorias_sessao ON agente_memorias (session_id, id);
+ *   CREATE INDEX idx_agent_memories_session ON agent_memories (session_id, id);
  *
- * (No PostgreSQL, troque BIGINT AUTO_INCREMENT por BIGSERIAL e DATETIME por TIMESTAMP.)
+ * (On PostgreSQL, replace BIGINT AUTO_INCREMENT with BIGSERIAL and DATETIME with TIMESTAMP.)
  */
 class PdoMemoryBackend implements MemoryBackend
 {
-    public function __construct(private \PDO $pdo, private string $tabela = 'agente_memorias') {}
+    public function __construct(private \PDO $pdo, private string $table = 'agent_memories') {}
 
-    public function carregar(string $sessionId): array
+    public function load(string $sessionId): array
     {
-        $sql = "SELECT papel, conteudo FROM {$this->tabela} WHERE session_id = ? ORDER BY id ASC";
+        $sql = "SELECT role, content FROM {$this->table} WHERE session_id = ? ORDER BY id ASC";
         $st = $this->pdo->prepare($sql);
         $st->execute([$sessionId]);
         return array_map(
-            fn (array $row) => ['role' => (string) $row['papel'], 'content' => (string) $row['conteudo']],
+            fn (array $row) => ['role' => (string) $row['role'], 'content' => (string) $row['content']],
             $st->fetchAll(\PDO::FETCH_ASSOC),
         );
     }
 
-    public function gravar(string $sessionId, string $papel, string $conteudo): void
+    public function save(string $sessionId, string $role, string $content): void
     {
         $st = $this->pdo->prepare(
-            "INSERT INTO {$this->tabela} (session_id, papel, conteudo, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO {$this->table} (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
         );
-        $st->execute([$sessionId, $papel, $conteudo, date('Y-m-d H:i:s')]);
+        $st->execute([$sessionId, $role, $content, date('Y-m-d H:i:s')]);
     }
 }

@@ -1,25 +1,25 @@
 <?php
 
-namespace AgenteIa;
+namespace AgentIa;
 
 /**
- * Cliente de chat que o Agente consome. A implementação de referência é
- * cheinisch/openrouter-php-client (chatEx + structuredChat); qualquer
- * cliente com estas assinaturas serve — inclusive um fake em testes.
+ * Chat client consumed by the Agent. The reference implementation is
+ * cheinisch/openrouter-php-client (chatEx + structuredChat); any client
+ * with these signatures works — including a fake in tests.
  */
 interface ChatClient
 {
     /**
-     * @param array $messages mensagens no formato OpenAI (role/content/tool_calls...)
-     * @param array $options opções do fornecedor (temperature, tools, max_completion_tokens...)
-     * @return array resposta com 'content' e, opcionalmente, 'tool_calls'
+     * @param array $messages messages in OpenAI format (role/content/tool_calls...)
+     * @param array $options provider options (temperature, tools, max_completion_tokens...)
+     * @return array response with 'content' and, optionally, 'tool_calls'
      */
     public function chatEx(array $messages, string $model, array $options = []): array;
 
     /**
-     * @param array $messages mensagens no formato OpenAI
-     * @param array $schema schema estruturado (name, strict, schema)
-     * @return array objeto decodificado conforme o schema
+     * @param array $messages messages in OpenAI format
+     * @param array $schema structured schema (name, strict, schema)
+     * @return array decoded object according to the schema
      */
     public function structuredChat(array $messages, array $schema, string $model, array $options = []): array;
 }

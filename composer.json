@@ -1,9 +1,9 @@
 {
     "name": "felipeazambuja/agente-ia",
-    "description": "Agente de IA genérico em PHP: histórico por sessão, memória plugável, tools (function calling) e subagentes com handoff estruturado.",
+    "description": "Generic AI agent in plain PHP: per-session history, pluggable memory, tools (function calling) and subagents with structured handoff.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["ai", "agent", "llm", "openrouter", "function-calling", "subagentes", "orchestrator"],
+    "keywords": ["ai", "agent", "llm", "openrouter", "function-calling", "subagents", "orchestrator"],
     "require": {
         "php": "^8.2",
         "cheinisch/openrouter-php-client": "^0.3.0",
@@ -15,7 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-            "AgenteIa\\": "src/"
+            "AgentIa\\": "src/"
         }
     },
     "autoload-dev": {
