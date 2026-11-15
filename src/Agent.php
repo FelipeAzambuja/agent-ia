@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
  * memory backend (stateless): context arrives complete on every
  * invocation and persistent memory would duplicate the transcript.
  * Call addSubAgent() after setTools(), which replaces the tools array.
- *   $agent->addSubAgent((new Agent($client))->setName('Clovis')->setInstruction('...'), 'Handles calls about subject X');
+ *   $agent->addSubAgent((new Agent($apiKey))->setName('Clovis')->setInstruction('...'), 'Handles calls about subject X');
  *
  * RAG: knowledge bases registered with addRagSource() are used in two
  * complementary ways. Before the turn, a light model routes: it decides

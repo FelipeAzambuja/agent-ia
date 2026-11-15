@@ -35,11 +35,8 @@ Requisitos: PHP 8.2+. O cliente de chat é o [cheinisch/openrouter-php-client](h
 
 ```php
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 
-$client = new OpenRouterChatClient(getenv('OPENROUTER_KEY'));
-
-$agent = new Agent($client);
+$agent = new Agent(getenv('OPENROUTER_KEY')); // string da chave, ou uma instância de ChatClient
 $agent->setInstruction('Você é um assistente de suporte. Responda em português.');
 $response = $agent->respond('Olá, preciso de ajuda.');
 ```
@@ -89,13 +86,15 @@ O agente executa o loop de ferramentas sozinho (limite de 10 rodadas, com uma ch
 Um `Agent` pode ter subagentes, registrados como ferramentas. O orquestrador roteia o assunto pela descrição e delega:
 
 ```php
-$orchestrator = new Agent($client);
+$key = getenv('OPENROUTER_KEY');
+
+$orchestrator = new Agent($key);
 $orchestrator->setInstruction('Você é o atendente principal...');
 
-$visitas = (new Agent($client))->setName('Clovis')->setInstruction('Você só atende agendamento de visitas...');
+$visitas = (new Agent($key))->setName('Clovis')->setInstruction('Você só atende agendamento de visitas...');
 $orchestrator->addSubAgent($visitas, 'Atende ligações sobre agendamento de visitas');
 $orchestrator->addSubAgent(
-    (new Agent($client))->setInstruction('Você só atende financiamento...'),
+    (new Agent($key))->setInstruction('Você só atende financiamento...'),
     'Atende ligações sobre financiamento',
 );
 
@@ -232,7 +231,6 @@ Cenário real (o mesmo exercitado pelos testes de integração): um agente de su
 
 ```php
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 use AgentIa\Rag\Chunker;
 use AgentIa\Rag\OpenRouterEmbeddings;
 use AgentIa\Rag\PdoVectorStore;
@@ -341,7 +339,7 @@ O `PdoVectorStore` carrega o namespace e calcula a similaridade de cosseno em PH
 Opcional, PSR-3:
 
 ```php
-$agent = new Agent($client, $loggerPsr3);
+$agent = new Agent(getenv('OPENROUTER_KEY'), $loggerPsr3);
 ```
 
 Falhas internas (roteamento RAG, busca RAG, avaliação de status, seleção de tópicos, gerenciamento de memória, erro de ferramenta) são registradas no log e nunca quebram o turno.

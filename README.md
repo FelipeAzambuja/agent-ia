@@ -35,11 +35,8 @@ Requirements: PHP 8.2+. The chat client is [cheinisch/openrouter-php-client](htt
 
 ```php
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 
-$client = new OpenRouterChatClient(getenv('OPENROUTER_KEY'));
-
-$agent = new Agent($client);
+$agent = new Agent(getenv('OPENROUTER_KEY')); // key string, or a ChatClient instance
 $agent->setInstruction('You are a support assistant. Answer in English.');
 $response = $agent->respond('Hello, I need help.');
 ```
@@ -89,13 +86,15 @@ The agent runs the tool loop by itself (10-round limit, with a light continuity 
 An `Agent` can have subagents, registered as tools. The orchestrator routes the subject by the description and delegates:
 
 ```php
-$orchestrator = new Agent($client);
+$key = getenv('OPENROUTER_KEY');
+
+$orchestrator = new Agent($key);
 $orchestrator->setInstruction('You are the main attendant...');
 
-$visits = (new Agent($client))->setName('Clovis')->setInstruction('You only handle visit scheduling...');
+$visits = (new Agent($key))->setName('Clovis')->setInstruction('You only handle visit scheduling...');
 $orchestrator->addSubAgent($visits, 'Handles calls about visit scheduling');
 $orchestrator->addSubAgent(
-    (new Agent($client))->setInstruction('You only handle financing...'),
+    (new Agent($key))->setInstruction('You only handle financing...'),
     'Handles calls about financing',
 );
 
@@ -232,7 +231,6 @@ Real scenario (the same one exercised by the integration tests): a support agent
 
 ```php
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 use AgentIa\Rag\Chunker;
 use AgentIa\Rag\OpenRouterEmbeddings;
 use AgentIa\Rag\PdoVectorStore;
@@ -341,7 +339,7 @@ CREATE INDEX idx_agent_rag_namespace ON agent_rag_chunks (namespace, id);
 Optional, PSR-3:
 
 ```php
-$agent = new Agent($client, $psr3Logger);
+$agent = new Agent(getenv('OPENROUTER_KEY'), $psr3Logger);
 ```
 
 Internal failures (RAG routing, RAG search, status assessment, topic selection, memory management, tool error) are logged and never crash the turn.
