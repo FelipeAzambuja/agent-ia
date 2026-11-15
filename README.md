@@ -5,7 +5,7 @@ Generic AI agent in plain PHP: per-session history, pluggable memory, tools (fun
 ## Installation
 
 ```bash
-composer require felipeazambuja/agente-ia
+composer require felipeazambuja/agent-ia
 ```
 
 The chat client is [cheinisch/openrouter-php-client](https://packagist.org/packages/cheinisch/openrouter-php-client) (OpenRouter: hundreds of models, one key). Any client implementing `AgentIa\ChatClient` works — including a fake in tests.

@@ -1,5 +1,5 @@
 {
-    "name": "felipeazambuja/agente-ia",
+    "name": "felipeazambuja/agent-ia",
     "description": "Generic AI agent in plain PHP: per-session history, pluggable memory, tools (function calling) and subagents with structured handoff.",
     "type": "library",
     "license": "MIT",
