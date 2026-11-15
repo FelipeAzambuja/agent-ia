@@ -45,7 +45,7 @@ class Agent
     /** Instance name; used as the tool name when the agent becomes a subagent. */
     public string $name = '';
     /** Main model for responses. */
-    public string $model = 'openai/gpt-4o-mini';
+    public string $model = 'openai/gpt-6-luna';
     /** Light model for internal decisions (continuity, topics, delegation status). */
     public string $lightModel = 'google/gemini-2.5-flash';
     /** Conversational memory backend; null = history lives only in the process. */
@@ -314,10 +314,15 @@ class Agent
         if ($this->tools === []) return [];
         $defs = [];
         foreach ($this->tools as $name => $tool) {
+            $parameters = $tool['parameters'] ?? ['type' => 'object', 'properties' => []];
+            // An empty PHP array serializes to [] (a list), but the JSON
+            // Schema of "properties" must be {} (an object): some providers
+            // (e.g. Baidu ERNIE) reject the list form with a 400.
+            $parameters['properties'] = (object) ($parameters['properties'] ?? []);
             $defs[] = ['type' => 'function', 'function' => [
                 'name' => $name,
                 'description' => (string) ($tool['description'] ?? ''),
-                'parameters' => $tool['parameters'] ?? ['type' => 'object', 'properties' => []],
+                'parameters' => $parameters,
             ]];
         }
         return ['tools' => $defs, 'tool_choice' => 'auto'];

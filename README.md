@@ -8,15 +8,15 @@ Generic AI agent in plain PHP: per-session history, pluggable memory, tools (fun
 composer require felipeazambuja/agent-ia
 ```
 
-The chat client is [cheinisch/openrouter-php-client](https://packagist.org/packages/cheinisch/openrouter-php-client) (OpenRouter: hundreds of models, one key). Any client implementing `AgentIa\ChatClient` works — including a fake in tests.
+The chat client is [cheinisch/openrouter-php-client](https://packagist.org/packages/cheinisch/openrouter-php-client) (OpenRouter: hundreds of models, one key) behind the built-in `AgentIa\OpenRouterChatClient` adapter. Any client implementing `AgentIa\ChatClient` works — including a fake in tests.
 
 ## Basic usage
 
 ```php
 use AgentIa\Agent;
-use cheinisch\OpenRouterClient;
+use AgentIa\OpenRouterChatClient;
 
-$client = new OpenRouterClient(getenv('OPENROUTER_KEY'));
+$client = new OpenRouterChatClient(getenv('OPENROUTER_KEY'));
 
 $agent = new Agent($client);
 $agent->setInstruction('You are a support assistant. Answer in English.');
@@ -130,7 +130,21 @@ composer install
 composer test
 ```
 
-All tests are offline: the `FakeChatClient` scripts the LLM responses, so nothing touches the network or consumes credits.
+The unit tests are offline: the `FakeChatClient` scripts the LLM responses, so nothing touches the network or consumes credits.
+
+### Integration tests (real OpenRouter)
+
+`tests/OpenRouterTest.php` runs the agent — plain turns, tool calling and subagent delegation — against the real OpenRouter API. The tests are skipped unless `OPENROUTER_KEY` is set, so the default suite above stays offline-safe (useful in CI).
+
+```bash
+cp .env.example .env   # then set your key (https://openrouter.ai/settings/keys)
+composer test-integration
+```
+
+- The suite loads the project `.env` on its own (a tiny parser in `tests/Pest.php`, no phpdotenv dependency); variables already present in the real environment win over the file.
+- The defaults in `.env.example` are free OpenRouter models, so the tests cost nothing — mind the free-tier rate limits (50 requests/day without a credit balance, 1000/day with one). Set `OPENROUTER_MODEL` / `OPENROUTER_LIGHT_MODEL` to test any other slug.
+- With DDEV: `ddev composer test-integration`. The `.env` file is part of the project, which is mounted into the container — no extra DDEV configuration is needed. `ddev dotenv set .env --openrouter-key=...` writes the key without opening an editor.
+- `.env` is gitignored; `.env.example` is the committed template.
 
 ## License
 
