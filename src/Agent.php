@@ -15,10 +15,7 @@ use Psr\Log\LoggerInterface;
  * conversation turn.
  *
  * Usage:
- *   $agent = new Agent($client); // $client implements AgentIa\ChatClient
- *   $agent->sessionId = 'support-123'; // required when a memory backend is set
- *   $agent->memory = new Psr16MemoryBackend($cache); // or PdoMemoryBackend($pdo)
- *   $agent->topicMemory = new PdoTopicsBackend($pdo); // long-term memory
+ *   $agent = new Agent($apiKey); // OpenRouter key, or a ChatClient instance
  *   $agent->setInstruction('You are ...');
  *   $agent->setTools(['name' => ['description' => ..., 'parameters' => schema, 'execute' => fn]]);
  *   $response = $agent->respond('user message');
@@ -79,10 +76,16 @@ class Agent
     private const MAX_TOOL_ROUNDS = 10;
     private const MAX_HISTORY = 50;
 
-    public function __construct(
-        private ChatClient $client,
-        private ?LoggerInterface $logger = null,
-    ) {}
+    private ChatClient $client;
+
+    /**
+     * @param string|ChatClient $client an OpenRouter API key (most common)
+     *                                  or any ChatClient implementation
+     */
+    public function __construct(string|ChatClient $client, private ?LoggerInterface $logger = null)
+    {
+        $this->client = is_string($client) ? new OpenRouterChatClient($client) : $client;
+    }
 
     public function setInstruction(string $instruction): static
     {

@@ -268,7 +268,7 @@ indexDocument($store, $embeddings, 'manuals',
     ['doc' => 'x800-manual']);
 
 // 3. The agent: register the source and talk
-$agent = new Agent(new OpenRouterChatClient(getenv('OPENROUTER_KEY')));
+$agent = new Agent(getenv('OPENROUTER_KEY'));
 $agent->setInstruction('You are a support assistant for Solaris Appliances. Answer briefly, in English.');
 $agent->addRagSource(new VectorRagSource(
     'manuals',                                        // name → tool search_manuals
@@ -374,15 +374,13 @@ Environment variables (loaded from `.env` by a tiny parser in `tests/Pest.php`; 
 | Variable | Purpose | Default |
 |---|---|---|
 | `OPENROUTER_KEY` | API key for chat and embeddings | — (required for integration) |
-| `OPENROUTER_MODEL` | Main model for the integration tests | free OpenRouter model |
-| `OPENROUTER_LIGHT_MODEL` | Light model (internal decisions) | free OpenRouter model |
 | `OPENROUTER_EMBEDDING_MODEL` | Embedding model for the RAG tests | `openai/text-embedding-3-small` |
 | `RAG_DB_DSN` | PDO DSN for the RAG tests | `mysql:host=db;dbname=db;charset=utf8mb4` (DDEV) |
 | `RAG_DB_USER` / `RAG_DB_PASSWORD` | Database credentials | `db` / `db` (DDEV) |
 
 Notes:
 
-- The chat-model defaults in `.env.example` are free OpenRouter models, so those tests cost nothing — mind the free-tier rate limits (50 requests/day without a credit balance, 1000/day with one). Embeddings cost ~$0.02 per 1M tokens; a full RAG suite run is a fraction of a cent.
+- The integration tests use the provider matrix in `providers()` (`tests/OpenRouterTest.php`), so they cost only what those models charge — mind the OpenRouter free-tier rate limits (50 requests/day without a credit balance, 1000/day with one). Embeddings cost ~$0.02 per 1M tokens; a full RAG suite run is a fraction of a cent.
 - With DDEV: `ddev composer test-integration`. The `.env` is part of the project, mounted into the container — no extra DDEV configuration is needed. `ddev dotenv set .env --openrouter-key=...` writes the key without opening an editor.
 - `.env` is gitignored; `.env.example` is the committed template.
 

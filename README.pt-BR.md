@@ -268,7 +268,7 @@ indexDocument($store, $embeddings, 'manuals',
     ['doc' => 'manual-x800']);
 
 // 3. O agente: registra a fonte e conversa
-$agent = new Agent(new OpenRouterChatClient(getenv('OPENROUTER_KEY')));
+$agent = new Agent(getenv('OPENROUTER_KEY'));
 $agent->setInstruction('Você é um assistente de suporte da Solaris Eletrodomésticos. Responda de forma breve, em português.');
 $agent->addRagSource(new VectorRagSource(
     'manuals',                                        // nome → ferramenta search_manuals
@@ -374,15 +374,13 @@ Variáveis de ambiente (carregadas do `.env` por um pequeno parser em `tests/Pes
 | Variável | Finalidade | Padrão |
 |---|---|---|
 | `OPENROUTER_KEY` | Chave de API para chat e embeddings | — (obrigatória para integração) |
-| `OPENROUTER_MODEL` | Modelo principal para os testes de integração | modelo gratuito do OpenRouter |
-| `OPENROUTER_LIGHT_MODEL` | Modelo leve (decisões internas) | modelo gratuito do OpenRouter |
 | `OPENROUTER_EMBEDDING_MODEL` | Modelo de embeddings para os testes de RAG | `openai/text-embedding-3-small` |
 | `RAG_DB_DSN` | DSN PDO para os testes de RAG | `mysql:host=db;dbname=db;charset=utf8mb4` (DDEV) |
 | `RAG_DB_USER` / `RAG_DB_PASSWORD` | Credenciais do banco | `db` / `db` (DDEV) |
 
 Observações:
 
-- Os padrões dos modelos de chat no `.env.example` são modelos gratuitos do OpenRouter, então esses testes não custam nada — atenção aos limites do tier gratuito (50 requisições/dia sem saldo de crédito, 1000/dia com um). Embeddings custam ~US$ 0,02 por 1M de tokens; uma rodada completa da suíte de RAG é uma fração de centavo.
+- Os testes de integração usam a matriz de provedores em `providers()` (`tests/OpenRouterTest.php`), então custam apenas o que esses modelos cobram — atenção aos limites do tier gratuito do OpenRouter (50 requisições/dia sem saldo de crédito, 1000/dia com um). Embeddings custam ~US$ 0,02 por 1M de tokens; uma rodada completa da suíte de RAG é uma fração de centavo.
 - Com DDEV: `ddev composer test-integration`. O `.env` faz parte do projeto, montado no container — nenhuma configuração extra de DDEV é necessária. `ddev dotenv set .env --openrouter-key=...` grava a chave sem abrir um editor.
 - O `.env` está no gitignore; o `.env.example` é o template versionado.
 

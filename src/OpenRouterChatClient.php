@@ -13,7 +13,7 @@ use cheinisch\OpenRouterClient as VendorOpenRouterClient;
  * provider routing, generation stats) stays available too.
  *
  * Usage:
- *   $agent = new Agent(new OpenRouterChatClient(getenv('OPENROUTER_KEY')));
+ *   $agent = new Agent(getenv('OPENROUTER_KEY')); // wraps this client for you
  */
 class OpenRouterChatClient extends VendorOpenRouterClient implements ChatClient
 {

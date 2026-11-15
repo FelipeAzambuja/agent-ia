@@ -33,14 +33,6 @@ function requireEnv(string $key): string
     return (string) $value;
 }
 
-/** Applies the optional OPENROUTER_MODEL / OPENROUTER_LIGHT_MODEL from .env. */
-function applyEnvModels(AgentIa\Agent $agent): AgentIa\Agent
-{
-    if ($model = getenv('OPENROUTER_MODEL')) $agent->model = (string) $model;
-    if ($model = getenv('OPENROUTER_LIGHT_MODEL')) $agent->lightModel = (string) $model;
-    return $agent;
-}
-
 /** Interactive chat loop shared by the examples. */
 function chatLoop(AgentIa\Agent $agent, string $hint): void
 {

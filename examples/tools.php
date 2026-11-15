@@ -5,7 +5,6 @@ declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
 
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 
 /**
  * Function calling: the model decides when to call your PHP functions.
@@ -31,7 +30,7 @@ function fetchOrderStatus(string $number): string
     };
 }
 
-$agent = applyEnvModels(new Agent(new OpenRouterChatClient(requireEnv('OPENROUTER_KEY'))));
+$agent = new Agent(requireEnv('OPENROUTER_KEY'));
 $agent->setInstruction('You are an order support assistant. Answer briefly, in English, using the tools when they help.');
 
 $agent->setTools([

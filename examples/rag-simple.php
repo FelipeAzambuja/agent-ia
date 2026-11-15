@@ -5,7 +5,6 @@ declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
 
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 use AgentIa\Rag\Rag;
 
 /**
@@ -42,7 +41,7 @@ echo "[ok] manuals indexed ({$rag->count()} chunks)\n";
 
 // --- The agent ---------------------------------------------------------------
 
-$agent = applyEnvModels(new Agent(new OpenRouterChatClient($openrouterKey)));
+$agent = new Agent($openrouterKey);
 $agent->setInstruction('You are the support assistant of Solaris Appliances. Answer briefly, in English, using the knowledge base excerpts when they are provided.');
 $agent->addRag($rag);
 

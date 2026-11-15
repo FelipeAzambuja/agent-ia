@@ -5,7 +5,6 @@ declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
 
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 
 /**
  * The smallest possible agent: one instruction, one turn. No memory,
@@ -18,7 +17,7 @@ use AgentIa\OpenRouterChatClient;
  * Requires OPENROUTER_KEY in .env (see .env.example).
  */
 
-$agent = applyEnvModels(new Agent(new OpenRouterChatClient(requireEnv('OPENROUTER_KEY'))));
+$agent = new Agent(requireEnv('OPENROUTER_KEY'));
 $agent->setInstruction('You are a friendly support assistant. Answer briefly, in English.');
 
 // One-shot: message comes from the command line.

@@ -6,7 +6,6 @@ require __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/_manuals.php';
 
 use AgentIa\Agent;
-use AgentIa\OpenRouterChatClient;
 
 /**
  * Attendance side of the support RAG: an agent that answers from the
@@ -35,7 +34,7 @@ if ($rag->count() === 0) {
 }
 echo "[ok] knowledge base ready ({$rag->count()} chunks)\n";
 
-$agent = applyEnvModels(new Agent(new OpenRouterChatClient(requireEnv('OPENROUTER_KEY'))));
+$agent = new Agent(requireEnv('OPENROUTER_KEY'));
 $agent->setInstruction('You are the support assistant of Solaris Appliances. Answer briefly, in English, using the knowledge base excerpts when they are provided.');
 $agent->addRag($rag);
 

@@ -7,7 +7,6 @@ require __DIR__ . '/_bootstrap.php';
 use AgentIa\Agent;
 use AgentIa\Memory\PdoMemoryBackend;
 use AgentIa\Memory\PdoTopicsBackend;
-use AgentIa\OpenRouterChatClient;
 
 /**
  * Persistent memory: without a backend the history lives only in the
@@ -48,7 +47,7 @@ $pdo->exec('CREATE TABLE IF NOT EXISTS agent_topics (
     updated_at TEXT NOT NULL
 )');
 
-$agent = applyEnvModels(new Agent(new OpenRouterChatClient(requireEnv('OPENROUTER_KEY'))));
+$agent = new Agent(requireEnv('OPENROUTER_KEY'));
 $agent->setInstruction('You are a personal assistant. Answer briefly, in English, and remember what the user tells you.');
 $agent->sessionId   = 'demo'; // fixed on purpose: re-running continues the same conversation
 $agent->memory      = new PdoMemoryBackend($pdo);
